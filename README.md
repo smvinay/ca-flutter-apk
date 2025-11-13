@@ -1,16 +1,28 @@
-# ca_desk
+# CA Flutter APK
 
-A new Flutter project.
+A cross-platform Flutter application for CA (Chartered Accountant) management and attendance tracking.
 
-## Getting Started
+## 🚀 Features
 
-This project is a starting point for a Flutter application.
+- 📱 **Cross-platform** (Android & iOS)
+- ⚙️ **Dynamic scaling UI** — adapts layout and widget size to screen
+- 💾 **Local cache support** — data is cached for faster loading
+- 👥 **Visitor Management System**
+- 📊 **Task statistics, attendance tracking, and reports**
+- 🔔 **Push notifications with OneSignal**
+- 🔐 **Secure backend integration using CodeIgniter 4**
+- 📷 **Camera configuration (single/multiple modes)**
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ Tech Stack
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Frontend:** Flutter (Dart)
+- **Backend:** CodeIgniter 4 (PHP)
+- **Database:** MySQL
+- **Notifications:** OneSignal
+- **Build:** EAS CLI (for Android / iOS)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📦 Setup Instructions
+
+1. Clone this repo:
+   ```bash
+   git clone https://github.com/smvinay/ca-flutter-apk.git
