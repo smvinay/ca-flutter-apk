@@ -136,6 +136,7 @@ class _CustomHeaderState extends State<CustomHeader> with TickerProviderStateMix
       String? avatarFromPrefs;
       int unreadFromPrefs = 0;
 
+
       if (raw != null) {
         final Map<String, dynamic> data = jsonDecode(raw);
         final possibleNameKeys = ['name', 'userName', 'username', 'full_name', 'fullName', 'first_name'];
@@ -259,6 +260,13 @@ class _CustomHeaderState extends State<CustomHeader> with TickerProviderStateMix
 
 // ...
   Future<void> _performLogout(BuildContext context) async {
+    // Constants (place them near the top of your class/file)
+    const String _cacheBoxName = 'cacheBox';
+     const String _cacheKeyServices = 'cache_service_list';
+     const String _cacheKeyServicesTs = 'cache_service_list_ts';
+     const String _cacheKeyTasks = 'cache_task_list';
+     const String _cacheKeyTasksTs = 'cache_task_list_ts';
+
     try {
       // If a custom logout callback is provided, use it
       if (widget.onLogout != null) {
@@ -266,37 +274,58 @@ class _CustomHeaderState extends State<CustomHeader> with TickerProviderStateMix
         return;
       }
 
-      // 1️⃣ Get SharedPreferences instance
+      // 1️⃣ SharedPreferences - preserve 'code_data'
       final prefs = await SharedPreferences.getInstance();
-
-      // ✅ Preserve 'code_data' before clearing everything
       final savedCompanyData = prefs.getString('code_data');
 
-      // Clear everything else
+      // Clear everything from SharedPreferences
       await prefs.clear();
 
-      // ✅ Restore company code and logo data after clearing
+      // Restore preserved values
       if (savedCompanyData != null && savedCompanyData.isNotEmpty) {
         await prefs.setString('code_data', savedCompanyData);
       }
 
-      // 2️⃣ Clear selected Hive boxes (do NOT call Hive.close())
+      // 2️⃣ Hive: clear keys inside the main cache box and certain other boxes
       try {
-        final boxNames = [
-          'cache_task_list',
-          'cache_task_list_ts',
-          'cache_service_list',
-          'cache_service_list_ts',
+        // Ensure the main cache box is open
+        final cacheBox = Hive.isBoxOpen(_cacheBoxName)
+            ? Hive.box(_cacheBoxName)
+            : await Hive.openBox(_cacheBoxName);
+
+        final keysToDeleteInCacheBox = [
+          _cacheKeyTasks,
+          _cacheKeyTasksTs,
+          _cacheKeyServices,
+          _cacheKeyServicesTs,
           'cache_userstats',
-          'user_settings',
           'offline_data',
+          // add any additional keys stored inside cacheBox here
         ];
 
-        for (final name in boxNames) {
+        for (final key in keysToDeleteInCacheBox) {
+          try {
+            if (cacheBox.containsKey(key)) {
+              await cacheBox.delete(key);
+            }
+          } catch (e) {
+            debugPrint('Error deleting key $key from $_cacheBoxName: $e');
+          }
+        }
+
+        // Optionally clear other named boxes (if they are actual Hive boxes)
+        // If you don't use separate boxes, you can remove/empty this list.
+        final boxesToClear = <String>[
+          'user_settings', // if this is a separate box in your app
+          // add other actual box names here (not keys)
+        ];
+
+        for (final name in boxesToClear) {
           try {
             if (Hive.isBoxOpen(name)) {
               await Hive.box(name).clear();
             } else {
+              // Try opening, clearing, and closing
               final box = await Hive.openBox(name);
               await box.clear();
               await box.close();
@@ -305,13 +334,11 @@ class _CustomHeaderState extends State<CustomHeader> with TickerProviderStateMix
             debugPrint('Error clearing Hive box $name: $e');
           }
         }
-
-        // DON'T call Hive.close() here. Closing Hive can cause reopen races after login.
       } catch (e) {
         debugPrint('Hive clear-all error: $e');
       }
 
-      // 3️⃣ Navigate back to LoginScreen
+      // 3️⃣ Navigate back to LoginScreen (if still mounted)
       if (!context.mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -326,6 +353,7 @@ class _CustomHeaderState extends State<CustomHeader> with TickerProviderStateMix
       }
     }
   }
+
 
 
 
